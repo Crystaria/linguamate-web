@@ -63,6 +63,8 @@ npm run dev
 
 打开 <http://127.0.0.1:5173>。Vite 会把 `/api/*` 代理到 BFF；`GET /api/health` 可查看当前是否处于 mock 模式、哪些工作流已配置。
 
+> 接入真实 Coze 时，把 `.env` 中的 `COZE_MOCK` 改为 `0`，并填入 `COZE_TOKEN` 与 4 个工作流 ID。
+
 生产构建：`npm run build`，产物在 `dist/`。
 
 ## 环境变量

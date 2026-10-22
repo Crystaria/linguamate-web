@@ -146,7 +146,9 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`[bff] LinguaMate BFF listening on http://127.0.0.1:${PORT}`);
   console.log('[bff] endpoints: /api/analyze /api/exercises /api/chat /api/ocr /api/health');
-  if (!process.env.COZE_TOKEN) {
+  if (process.env.COZE_MOCK === '1') {
+    console.log('[bff] COZE_MOCK=1 -> serving mock fixtures (set COZE_MOCK=0 to call Coze).');
+  } else if (!process.env.COZE_TOKEN) {
     console.log('[bff] COZE_TOKEN is empty -> mock fixtures are served.');
   }
 });
