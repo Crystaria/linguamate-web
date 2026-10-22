@@ -21,6 +21,45 @@ export function parseMaybeJson(value) {
 const asString = (value) => (typeof value === 'string' ? value : '');
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
+const DOMAIN_KEYS = [
+  'analysis_markdown',
+  'analysis',
+  'summary',
+  'vocabulary',
+  'questions',
+  'answer_key',
+  'reply',
+  'opening',
+  'extracted_text',
+  'correction',
+  'suggestions',
+];
+
+/**
+ * Coze sometimes wraps workflow outputs in `{ output: "<json>" }`,
+ * `{ result: ... }` or `{ data: ... }`. Unwrap those layers, but never
+ * unwrap an object that already looks like a domain payload.
+ */
+export function unwrapPayload(raw) {
+  let value = parseMaybeJson(raw);
+  let guard = 0;
+
+  while (
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    !DOMAIN_KEYS.some((key) => value[key] !== undefined) &&
+    guard < 3
+  ) {
+    const next = parseMaybeJson(value.output ?? value.result ?? value.data);
+    if (next === undefined || next === value) break;
+    value = next;
+    guard += 1;
+  }
+
+  return value || {};
+}
+
 function firstString(...values) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) return value;
@@ -29,7 +68,7 @@ function firstString(...values) {
 }
 
 export function adaptAnalysis(raw) {
-  const payload = parseMaybeJson(raw) || {};
+  const payload = unwrapPayload(raw);
   const nested = parseMaybeJson(payload.analysis);
   const structured =
     nested && typeof nested === 'object' && !Array.isArray(nested)
@@ -117,7 +156,7 @@ export function normalizeQuestion(question, index, answerKey = {}) {
 }
 
 export function adaptExercises(raw, { answerKey } = {}) {
-  const payload = parseMaybeJson(raw) || {};
+  const payload = unwrapPayload(raw);
   const key = normalizeAnswerKey(payload.answer_key || payload.answerKey || answerKey);
   const list = asArray(payload.questions || payload.exercises).map((question, index) =>
     normalizeQuestion(question, index, key)
@@ -152,7 +191,7 @@ function normalizeCorrection(raw) {
 }
 
 export function adaptChat(raw) {
-  const payload = parseMaybeJson(raw) || {};
+  const payload = unwrapPayload(raw);
   const state = parseMaybeJson(payload.state) || {};
   const correction = normalizeCorrection(payload.correction);
   const reply = firstString(payload.reply, payload.opening, payload.response);
@@ -180,7 +219,7 @@ export function adaptChat(raw) {
 }
 
 export function adaptOcr(raw) {
-  const payload = parseMaybeJson(raw) || {};
+  const payload = unwrapPayload(raw);
   const analysis = adaptAnalysis(payload);
   return {
     ...analysis,
