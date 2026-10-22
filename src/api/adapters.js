@@ -233,16 +233,23 @@ export function adaptOcr(raw) {
   };
 }
 
-const CHOICE_LETTER = /^[A-Z]$/;
+const CHOICE_LETTER = /^[\(\[]?\s*([A-Za-z])\s*[\)\].、．]?$/;
 
 function letterForOption(options, value) {
-  const target = String(value || '').trim();
+  const list = Array.isArray(options) ? options : [];
+  const normalizeOption = (option) =>
+    String(option ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const target = normalizeOption(value);
   if (!target) return '';
 
-  const index = options.findIndex(
-    (option) => String(option).trim().toLowerCase() === target.toLowerCase()
-  );
+  const index = list.findIndex((option) => normalizeOption(option) === target);
   return index >= 0 ? String.fromCharCode(65 + index) : '';
+}
+
+/** Accepts `a`, `A`, `(a)`, `[A]`, `a.` — returns the uppercase letter. */
+function choiceLetter(value) {
+  const match = CHOICE_LETTER.exec(String(value || '').trim());
+  return match ? match[1].toUpperCase() : '';
 }
 
 function normalizeSentence(value) {
@@ -270,12 +277,8 @@ export function gradeAnswer(question, answerKey, userAnswer) {
   let isCorrect = false;
 
   if (question.type === 'multiple_choice') {
-    const expectedLetter = CHOICE_LETTER.test(expected)
-      ? expected
-      : letterForOption(question.options, expected);
-    const actualLetter = CHOICE_LETTER.test(actual)
-      ? actual
-      : letterForOption(question.options, actual);
+    const expectedLetter = choiceLetter(expected) || letterForOption(question.options, expected);
+    const actualLetter = choiceLetter(actual) || letterForOption(question.options, actual);
     isCorrect = Boolean(expectedLetter && actualLetter && expectedLetter === actualLetter);
   } else {
     const alternatives = expected

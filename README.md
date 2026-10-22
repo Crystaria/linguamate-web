@@ -67,6 +67,17 @@ npm run dev
 
 生产构建：`npm run build`，产物在 `dist/`。
 
+## 测试
+
+```bash
+npm test               # 单元测试 + BFF 契约测试
+npm run test:adapters  # unwrapPayload / gradeAnswer / 适配器映射
+npm run test:bff       # 自动启动 COZE_MOCK=1 的 BFF，校验 4 个端点
+```
+
+- `scripts/test-adapters.js`：覆盖嵌套响应解包，以及选择题（大小写、空格、`(a)`/`B.` 格式）与组句/对话题（大小写、标点、撇号、连字符、多答案）的本地判分。
+- `scripts/test-bff.js`：在随机端口启动 BFF，校验 analyze / exercises / chat / ocr 的字段契约、适配器输出、错误码、CORS，并在结束时自动关闭服务。
+
 ## 环境变量
 
 ### 前端（会被打包进浏览器，禁止放密钥）

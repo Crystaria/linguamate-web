@@ -9,6 +9,9 @@
     "dev:api": "node server/dev-server.js",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "npm run test:adapters && npm run test:bff",
+    "test:adapters": "node scripts/test-adapters.js",
+    "test:bff": "node scripts/test-bff.js",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
